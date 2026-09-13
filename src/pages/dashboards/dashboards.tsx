@@ -1,0 +1,1 @@
+export function Dashboards() { return <div className="p-8">Dashboards Page</div>; }
