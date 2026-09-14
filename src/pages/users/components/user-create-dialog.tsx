@@ -1,10 +1,28 @@
 import { useState } from 'react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  CreditCard,
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+  Landmark,
+  Loader2,
+  MapPin,
+  Phone,
+  ShieldAlert,
+  UserPlus,
+  Wand2,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { api } from '@/lib/axios.config';
 import { useApiQuery } from '@/hooks/use-api-query';
-import { toast } from 'sonner';
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogBody,
@@ -14,6 +32,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -21,25 +41,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { createUserSchema } from '../schemas';
 import {
-  UserPlus,
-  Loader2,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Wand2,
-  Check,
-  Copy,
-  AlertTriangle,
-  ShieldAlert,
-} from 'lucide-react';
-import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
-import { CreateUserDto, EmploymentStatus, formatRoleName, UserRole } from '../types';
+  CreateUserDto,
+  EmploymentStatus,
+  formatRoleName,
+  PositionOption,
+  UserRole,
+} from '../types';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+}
+
+function formatSalaryVND(salaryStr?: string | null): string {
+  if (!salaryStr) return '';
+  const num = Number(salaryStr);
+  if (isNaN(num)) return salaryStr;
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(num);
 }
 
 function generateStrongPassword(): string {
@@ -74,10 +98,21 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
   const [email, setEmail] = useState('');
   const [employeeCode, setEmployeeCode] = useState('');
   const [department, setDepartment] = useState('');
+  const [positionId, setPositionId] = useState<string>('');
   const [hireDate, setHireDate] = useState('');
   const [employmentStatus, setEmploymentStatus] =
     useState<EmploymentStatus>('active');
   const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
+
+  // Profile fields (Thông tin cá nhân)
+  const [phone, setPhone] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [idCardNumber, setIdCardNumber] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [address, setAddress] = useState('');
+  const [bankAccount, setBankAccount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [showProfileFields, setShowProfileFields] = useState(false);
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,6 +139,14 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch available positions
+  const { data: positions = [], isLoading: isLoadingPositions } = useApiQuery<
+    PositionOption[]
+  >(['users', 'positions'], '/users/positions', {
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const resetForm = () => {
     setUsername('');
     setPassword('');
@@ -112,9 +155,18 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
     setEmail('');
     setEmployeeCode('');
     setDepartment('');
+    setPositionId('');
     setHireDate('');
     setEmploymentStatus('active');
     setSelectedRoleIds([]);
+    setPhone('');
+    setAvatarUrl('');
+    setIdCardNumber('');
+    setDateOfBirth('');
+    setAddress('');
+    setBankAccount('');
+    setBankName('');
+    setShowProfileFields(false);
     setErrorMsg('');
     setFieldErrors({});
     setConfirmEmptyRoles(false);
@@ -129,33 +181,71 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
   };
 
   const validate = (): boolean => {
-    const errors: Record<string, string> = {};
+    const cleanBankAccount = bankAccount.replace(/[\s-]+/g, '');
+    const hasProfileData = Boolean(
+      phone.trim() ||
+      avatarUrl.trim() ||
+      idCardNumber.trim() ||
+      dateOfBirth.trim() ||
+      address.trim() ||
+      cleanBankAccount ||
+      bankName.trim(),
+    );
 
-    const cleanUsername = username.trim();
-    if (!cleanUsername) {
-      errors.username = 'Username is required';
-    } else if (cleanUsername.length < 3 || cleanUsername.length > 50) {
-      errors.username = 'Username must be between 3 and 50 characters';
-    } else if (!/^[A-Za-z0-9._-]+$/.test(cleanUsername)) {
-      errors.username = 'Only letters, numbers, and characters . _ - are allowed';
+    const profile = hasProfileData
+      ? {
+          phone: phone.trim() || undefined,
+          avatarUrl: avatarUrl.trim() || undefined,
+          idCardNumber: idCardNumber.trim() || undefined,
+          dateOfBirth: dateOfBirth.trim() || undefined,
+          address: address.trim() || undefined,
+          bankAccount: cleanBankAccount || undefined,
+          bankName: bankName.trim() || undefined,
+        }
+      : undefined;
+
+    const result = createUserSchema.safeParse({
+      username,
+      password,
+      fullName,
+      email: email.trim() || undefined,
+      employeeCode: employeeCode.trim() || undefined,
+      department: department.trim() || undefined,
+      positionId: positionId ? Number(positionId) : undefined,
+      hireDate: hireDate.trim() || undefined,
+      employmentStatus,
+      roleIds: selectedRoleIds,
+      profile,
+    });
+
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const fieldName =
+          (issue.path[issue.path.length - 1] as string) ||
+          (issue.path[0] as string);
+        if (!errors[fieldName]) {
+          errors[fieldName] = issue.message;
+        }
+      });
+      setFieldErrors(errors);
+
+      if (
+        errors.phone ||
+        errors.avatarUrl ||
+        errors.idCardNumber ||
+        errors.dateOfBirth ||
+        errors.address ||
+        errors.bankAccount ||
+        errors.bankName
+      ) {
+        setShowProfileFields(true);
+      }
+      return false;
     }
 
-    if (!password) {
-      errors.password = 'Password is required';
-    } else if (password.length < 12) {
-      errors.password = 'Password must be at least 12 characters';
-    }
-
-    if (!fullName.trim()) {
-      errors.fullName = 'Full name is required';
-    }
-
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      errors.email = 'Invalid email address format';
-    }
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    setFieldErrors({});
+    return true;
   };
 
   const toggleRole = (roleId: number) => {
@@ -186,6 +276,33 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
     setIsSubmitting(true);
 
     try {
+      const cleanBankAccount = bankAccount.replace(/[\s-]+/g, '');
+      const hasProfileData = Boolean(
+        phone.trim() ||
+        avatarUrl.trim() ||
+        idCardNumber.trim() ||
+        dateOfBirth.trim() ||
+        address.trim() ||
+        cleanBankAccount ||
+        bankName.trim(),
+      );
+
+      const profilePayload = hasProfileData
+        ? {
+            ...(phone.trim() ? { phone: phone.trim() } : {}),
+            ...(avatarUrl.trim() ? { avatarUrl: avatarUrl.trim() } : {}),
+            ...(idCardNumber.trim()
+              ? { idCardNumber: idCardNumber.trim() }
+              : {}),
+            ...(dateOfBirth.trim()
+              ? { dateOfBirth: dateOfBirth.trim().substring(0, 10) }
+              : {}),
+            ...(address.trim() ? { address: address.trim() } : {}),
+            ...(cleanBankAccount ? { bankAccount: cleanBankAccount } : {}),
+            ...(bankName.trim() ? { bankName: bankName.trim() } : {}),
+          }
+        : undefined;
+
       const payload: CreateUserDto = {
         username: username.trim(),
         password,
@@ -194,8 +311,10 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
         ...(email.trim() ? { email: email.trim() } : {}),
         ...(employeeCode.trim() ? { employeeCode: employeeCode.trim() } : {}),
         ...(department.trim() ? { department: department.trim() } : {}),
+        ...(positionId ? { positionId: Number(positionId) } : {}),
         ...(hireDate ? { hireDate } : {}),
         ...(selectedRoleIds.length > 0 ? { roleIds: selectedRoleIds } : {}),
+        ...(profilePayload ? { profile: profilePayload } : {}),
       };
 
       await api.post('/users', payload);
@@ -215,13 +334,16 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
       if (serverCode === 'DUPLICATE_RESOURCE' && details?.fields) {
         const errors: Record<string, string> = {};
         for (const f of details.fields) {
-          if (f === 'username') errors.username = 'This username is already taken';
+          if (f === 'username')
+            errors.username = 'This username is already taken';
           if (f === 'email') errors.email = 'This email is already in use';
           if (f === 'employeeCode')
             errors.employeeCode = 'This employee code is already in use';
         }
         setFieldErrors(errors);
-        setErrorMsg('Duplicate information detected. Please check the highlighted fields.');
+        setErrorMsg(
+          'Duplicate information detected. Please check the highlighted fields.',
+        );
       } else {
         setErrorMsg(
           e?.response?.data?.message ||
@@ -242,7 +364,8 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
             Add New Employee
           </DialogTitle>
           <DialogDescription>
-            Create user account, set initial password, and configure permissions.
+            Create user account, set initial password, and configure
+            permissions.
           </DialogDescription>
         </DialogHeader>
 
@@ -254,25 +377,34 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                 Account created successfully for {createdSummary.fullName}!
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                The system <strong>does not send emails</strong> containing initial passwords. Please copy the credentials below to deliver directly or send through a secure channel. The employee will be required to change password on first login.
+                The system <strong>does not send emails</strong> containing
+                initial passwords. Please copy the credentials below to deliver
+                directly or send through a secure channel. The employee will be
+                required to change password on first login.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-muted/40 border border-border flex flex-col gap-3 font-mono text-xs">
               <div className="flex justify-between items-center py-1 border-b border-border/50">
-                <span className="text-muted-foreground font-sans">Username:</span>
+                <span className="text-muted-foreground font-sans">
+                  Username:
+                </span>
                 <span className="font-bold text-foreground text-sm">
                   {createdSummary.username}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-border/50">
-                <span className="text-muted-foreground font-sans">Initial Password:</span>
+                <span className="text-muted-foreground font-sans">
+                  Initial Password:
+                </span>
                 <span className="font-bold text-primary text-sm tracking-wider">
                   {createdSummary.password}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1">
-                <span className="text-muted-foreground font-sans">Password Change Status:</span>
+                <span className="text-muted-foreground font-sans">
+                  Password Change Status:
+                </span>
                 <span className="text-amber-500 font-sans font-medium">
                   Required on first login
                 </span>
@@ -295,9 +427,7 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                 )}
                 {isCopied ? 'Copied' : 'Copy Credentials'}
               </Button>
-              <Button onClick={() => handleClose(false)}>
-                Done & Close
-              </Button>
+              <Button onClick={() => handleClose(false)}>Done & Close</Button>
             </div>
           </DialogBody>
         ) : (
@@ -307,7 +437,10 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
               <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5">
                 <ShieldAlert className="size-4 text-amber-500 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
-                  <strong>Password Delivery Note:</strong> The administrator sets the initial password and provides it directly to the employee. The system does not email passwords for security compliance.
+                  <strong>Password Delivery Note:</strong> The administrator
+                  sets the initial password and provides it directly to the
+                  employee. The system does not email passwords for security
+                  compliance.
                 </div>
               </div>
 
@@ -321,14 +454,18 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                   <Input
                     value={username}
                     onChange={(e) => {
-                      setUsername(e.target.value.toLowerCase().replace(/\s+/g, ''));
+                      setUsername(
+                        e.target.value.toLowerCase().replace(/\s+/g, ''),
+                      );
                       if (fieldErrors.username) {
                         setFieldErrors((prev) => ({ ...prev, username: '' }));
                       }
                     }}
                     placeholder="e.g. jdoe"
                     className={`font-mono text-xs h-9 ${
-                      fieldErrors.username ? 'border-destructive focus-visible:ring-destructive/30' : ''
+                      fieldErrors.username
+                        ? 'border-destructive focus-visible:ring-destructive/30'
+                        : ''
                     }`}
                     disabled={isSubmitting}
                   />
@@ -370,7 +507,9 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                       }}
                       placeholder="Minimum 12 characters"
                       className={`font-mono text-xs h-9 pe-16 ${
-                        fieldErrors.password ? 'border-destructive focus-visible:ring-destructive/30' : ''
+                        fieldErrors.password
+                          ? 'border-destructive focus-visible:ring-destructive/30'
+                          : ''
                       }`}
                       disabled={isSubmitting}
                     />
@@ -390,17 +529,21 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
                     {fieldErrors.password ? (
-                      <span className="text-destructive">{fieldErrors.password}</span>
+                      <span className="text-destructive">
+                        {fieldErrors.password}
+                      </span>
                     ) : (
-                      <span className="text-muted-foreground">Minimum 12 characters</span>
+                      <span className="text-muted-foreground">
+                        Minimum 12 characters
+                      </span>
                     )}
                     <span
                       className={`font-mono font-medium ${
                         password.length >= 12
                           ? 'text-emerald-500'
                           : password.length > 0
-                          ? 'text-amber-500'
-                          : 'text-muted-foreground'
+                            ? 'text-amber-500'
+                            : 'text-muted-foreground'
                       }`}
                     >
                       {password.length}/12 chars
@@ -426,7 +569,9 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                     }}
                     placeholder="e.g. John Doe"
                     className={`h-9 text-xs ${
-                      fieldErrors.fullName ? 'border-destructive focus-visible:ring-destructive/30' : ''
+                      fieldErrors.fullName
+                        ? 'border-destructive focus-visible:ring-destructive/30'
+                        : ''
                     }`}
                     disabled={isSubmitting}
                   />
@@ -451,7 +596,9 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                     }}
                     placeholder="jdoe@example.com"
                     className={`h-9 text-xs ${
-                      fieldErrors.email ? 'border-destructive focus-visible:ring-destructive/30' : ''
+                      fieldErrors.email
+                        ? 'border-destructive focus-visible:ring-destructive/30'
+                        : ''
                     }`}
                     disabled={isSubmitting}
                   />
@@ -470,12 +617,17 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                     onChange={(e) => {
                       setEmployeeCode(e.target.value.toUpperCase());
                       if (fieldErrors.employeeCode) {
-                        setFieldErrors((prev) => ({ ...prev, employeeCode: '' }));
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          employeeCode: '',
+                        }));
                       }
                     }}
                     placeholder="EMP001"
                     className={`font-mono text-xs h-9 ${
-                      fieldErrors.employeeCode ? 'border-destructive focus-visible:ring-destructive/30' : ''
+                      fieldErrors.employeeCode
+                        ? 'border-destructive focus-visible:ring-destructive/30'
+                        : ''
                     }`}
                     disabled={isSubmitting}
                   />
@@ -498,6 +650,41 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                   />
                 </div>
 
+                {/* Position / Chức vụ */}
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-semibold">
+                    Chức vụ (Position)
+                  </Label>
+                  <Select
+                    value={positionId || 'none'}
+                    onValueChange={(val) =>
+                      setPositionId(val === 'none' ? '' : val)
+                    }
+                    disabled={isSubmitting || isLoadingPositions}
+                  >
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="Chọn chức vụ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        -- Chưa chọn chức vụ --
+                      </SelectItem>
+                      {positions.map((pos) => (
+                        <SelectItem key={pos.id} value={String(pos.id)}>
+                          <div className="flex items-center gap-2">
+                            <span>{pos.name}</span>
+                            {pos.defaultSalary && (
+                              <span className="text-[11px] text-muted-foreground font-mono">
+                                ({formatSalaryVND(pos.defaultSalary)})
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Hire Date */}
                 <div className="flex flex-col gap-1.5">
                   <Label className="text-xs font-semibold">Hire Date</Label>
@@ -512,7 +699,9 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
 
                 {/* Employment Status */}
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs font-semibold">Employment Status</Label>
+                  <Label className="text-xs font-semibold">
+                    Employment Status
+                  </Label>
                   <Select
                     value={employmentStatus}
                     onValueChange={(val) =>
@@ -532,6 +721,223 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                 </div>
               </div>
 
+              {/* Personal Profile Section (Collapsible) */}
+              <div className="rounded-xl border border-border overflow-hidden bg-card">
+                <button
+                  type="button"
+                  onClick={() => setShowProfileFields((prev) => !prev)}
+                  className="w-full p-3.5 bg-muted/20 hover:bg-muted/30 transition-colors flex items-center justify-between text-start cursor-pointer select-none"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="size-6 rounded bg-primary/10 text-primary flex items-center justify-center">
+                      <CreditCard className="size-3.5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-foreground">
+                        Hồ sơ cá nhân (Tùy chọn)
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Số điện thoại, CCCD/CMND, ngày sinh, địa chỉ và tài
+                        khoản ngân hàng
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{showProfileFields ? 'Thu gọn' : 'Mở rộng'}</span>
+                    {showProfileFields ? (
+                      <ChevronUp className="size-4" />
+                    ) : (
+                      <ChevronDown className="size-4" />
+                    )}
+                  </div>
+                </button>
+
+                {showProfileFields && (
+                  <div className="p-4 space-y-4 border-t border-border bg-card">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Phone */}
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">
+                          Số điện thoại
+                        </Label>
+                        <div className="relative">
+                          <Phone className="size-3.5 text-muted-foreground absolute start-2.5 top-1/2 -translate-y-1/2" />
+                          <Input
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="vd: 0912345678 hoặc +84..."
+                            className={`h-9 text-xs ps-8 ${
+                              fieldErrors.phone
+                                ? 'border-destructive focus-visible:ring-destructive/30'
+                                : ''
+                            }`}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {fieldErrors.phone && (
+                          <span className="text-[11px] text-destructive">
+                            {fieldErrors.phone}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Date of Birth */}
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">
+                          Ngày sinh
+                        </Label>
+                        <Input
+                          type="date"
+                          value={dateOfBirth}
+                          onChange={(e) => setDateOfBirth(e.target.value)}
+                          className={`h-9 text-xs font-mono ${
+                            fieldErrors.dateOfBirth
+                              ? 'border-destructive focus-visible:ring-destructive/30'
+                              : ''
+                          }`}
+                          disabled={isSubmitting}
+                        />
+                        {fieldErrors.dateOfBirth && (
+                          <span className="text-[11px] text-destructive">
+                            {fieldErrors.dateOfBirth}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* ID Card Number */}
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">
+                          Số CMND / CCCD
+                        </Label>
+                        <Input
+                          value={idCardNumber}
+                          onChange={(e) =>
+                            setIdCardNumber(e.target.value.trim())
+                          }
+                          placeholder="Đúng 9 hoặc 12 chữ số"
+                          maxLength={12}
+                          className={`font-mono text-xs h-9 ${
+                            fieldErrors.idCardNumber
+                              ? 'border-destructive focus-visible:ring-destructive/30'
+                              : ''
+                          }`}
+                          disabled={isSubmitting}
+                        />
+                        {fieldErrors.idCardNumber && (
+                          <span className="text-[11px] text-destructive">
+                            {fieldErrors.idCardNumber}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Avatar URL */}
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">
+                          Link ảnh đại diện (Avatar URL)
+                        </Label>
+                        <div className="relative">
+                          <ImageIcon className="size-3.5 text-muted-foreground absolute start-2.5 top-1/2 -translate-y-1/2" />
+                          <Input
+                            value={avatarUrl}
+                            onChange={(e) => setAvatarUrl(e.target.value)}
+                            placeholder="https://.../avatar.jpg"
+                            className={`h-9 text-xs ps-8 ${
+                              fieldErrors.avatarUrl
+                                ? 'border-destructive focus-visible:ring-destructive/30'
+                                : ''
+                            }`}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {fieldErrors.avatarUrl && (
+                          <span className="text-[11px] text-destructive">
+                            {fieldErrors.avatarUrl}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Address */}
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="text-xs font-semibold">
+                        Địa chỉ thường trú / liên hệ
+                      </Label>
+                      <div className="relative">
+                        <MapPin className="size-3.5 text-muted-foreground absolute start-2.5 top-1/2 -translate-y-1/2" />
+                        <Input
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành..."
+                          className={`h-9 text-xs ps-8 ${
+                            fieldErrors.address
+                              ? 'border-destructive focus-visible:ring-destructive/30'
+                              : ''
+                          }`}
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                      {fieldErrors.address && (
+                        <span className="text-[11px] text-destructive">
+                          {fieldErrors.address}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Bank Information */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border/50">
+                      {/* Bank Name */}
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">
+                          Tên ngân hàng
+                        </Label>
+                        <div className="relative">
+                          <Landmark className="size-3.5 text-muted-foreground absolute start-2.5 top-1/2 -translate-y-1/2" />
+                          <Input
+                            value={bankName}
+                            onChange={(e) => setBankName(e.target.value)}
+                            placeholder="vd: Techcombank, Vietcombank..."
+                            className={`h-9 text-xs ps-8 ${
+                              fieldErrors.bankName
+                                ? 'border-destructive focus-visible:ring-destructive/30'
+                                : ''
+                            }`}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        {fieldErrors.bankName && (
+                          <span className="text-[11px] text-destructive">
+                            {fieldErrors.bankName}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Bank Account */}
+                      <div className="flex flex-col gap-1.5">
+                        <Label className="text-xs font-semibold">
+                          Số tài khoản ngân hàng
+                        </Label>
+                        <Input
+                          value={bankAccount}
+                          onChange={(e) => setBankAccount(e.target.value)}
+                          placeholder="Chỉ gồm chữ số (6-30 ký tự)"
+                          className={`font-mono text-xs h-9 ${
+                            fieldErrors.bankAccount
+                              ? 'border-destructive focus-visible:ring-destructive/30'
+                              : ''
+                          }`}
+                          disabled={isSubmitting}
+                        />
+                        {fieldErrors.bankAccount && (
+                          <span className="text-[11px] text-destructive">
+                            {fieldErrors.bankAccount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Roles Selection */}
               <div className="flex flex-col gap-2 p-3.5 rounded-xl bg-muted/20 border border-border">
                 <div className="flex items-center justify-between">
@@ -543,7 +949,8 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Assigning roles now is recommended. Accounts without roles will see an empty navigation menu.
+                  Assigning roles now is recommended. Accounts without roles
+                  will see an empty navigation menu.
                 </p>
 
                 {isLoadingRoles ? (
@@ -602,7 +1009,9 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
                     No roles assigned to this employee!
                   </div>
                   <p>
-                    An account without roles can still log in, but will have an empty menu and cannot perform any work. Are you sure you want to create this account without any roles?
+                    An account without roles can still log in, but will have an
+                    empty menu and cannot perform any work. Are you sure you
+                    want to create this account without any roles?
                   </p>
                   <div className="flex justify-end gap-2 pt-1">
                     <Button

@@ -20,6 +20,7 @@ import { MenuFormSkeleton } from './components/menu-form-skeleton';
 import { MenuItemForm } from './components/menu-item-form';
 import { MenuTree } from './components/menu-tree';
 import { MenuTreeSkeleton } from './components/menu-tree-skeleton';
+import { useMinDelay } from '@/hooks/use-min-delay';
 import { findItemInTree } from './tree-utils';
 import {
   AdminMenuItem,
@@ -54,6 +55,17 @@ export function MenuPage() {
   >(['menus', 'admin', 'permissions'], '/menu/admin/permissions', {
     staleTime: 10 * 60 * 1000,
     retry: false,
+  });
+
+  // Minimum duration skeleton handling (initial load: 800ms, refresh: 650ms)
+  const { showInitialSkeleton, isTableLoading: isPageRefreshing } = useMinDelay({
+    isLoading: isTreeLoading || isPermsLoading,
+    isFetching: isTreeFetching,
+    hasData: menuTree.length > 0,
+    options: {
+      initialDelay: 800,
+      subsequentDelay: 650,
+    },
   });
 
   const selectedItem = selectedId ? findItemInTree(menuTree, selectedId) : null;
@@ -200,11 +212,11 @@ export function MenuPage() {
             size="sm"
             className="gap-1.5"
             onClick={() => refetchTree()}
-            disabled={isTreeFetching}
+            disabled={isPageRefreshing}
             title="Refresh menu data from server"
           >
             <RefreshCw
-              className={`size-3.5 ${isTreeFetching ? 'animate-spin' : ''}`}
+              className={`size-3.5 ${isPageRefreshing ? 'animate-spin' : ''}`}
             />
             Refresh
           </Button>
@@ -221,17 +233,13 @@ export function MenuPage() {
         </ToolbarActions>
       </Toolbar>
 
-      {isLoading ? (
+      {showInitialSkeleton ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           <div className="lg:col-span-5">
-            <Card className="border border-border">
-              <MenuTreeSkeleton />
-            </Card>
+            <MenuTreeSkeleton />
           </div>
           <div className="lg:col-span-7">
-            <Card className="border border-border">
-              <MenuFormSkeleton />
-            </Card>
+            <MenuFormSkeleton />
           </div>
         </div>
       ) : (
@@ -248,6 +256,11 @@ export function MenuPage() {
           </div>
           <div className="lg:col-span-7">
             <MenuItemForm
+              key={
+                isCreateMode
+                  ? `create-${createParentId ?? 'root'}`
+                  : `edit-${selectedId ?? 'none'}`
+              }
               item={selectedItem}
               treeData={menuTree}
               permissions={permissions}

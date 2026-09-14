@@ -39,10 +39,12 @@ import {
   Mail,
   UserCheck,
   Eye,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/auth/context/auth-context';
 import { useApiQuery } from '@/hooks/use-api-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMinDelay } from '@/hooks/use-min-delay';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -246,8 +248,21 @@ export function UserTable() {
     {
       params: queryParams,
       placeholderData: keepPreviousData,
+      staleTime: 0,
     },
   );
+
+  // Minimum duration skeleton handling (initial: 800ms, search/filter: 650ms)
+  const { showInitialSkeleton, isTableLoading } = useMinDelay({
+    isLoading,
+    isFetching,
+    hasData: !!data,
+    triggerKey: queryParams,
+    options: {
+      initialDelay: 800,
+      subsequentDelay: 650,
+    },
+  });
 
   const items = data?.items || [];
   const meta = data?.meta;
@@ -627,7 +642,7 @@ export function UserTable() {
     roleFilter !== 'all' ||
     unassignedOnly;
 
-  if (isLoading && !data) {
+  if (showInitialSkeleton) {
     return <UserTableSkeleton />;
   }
 
@@ -635,7 +650,8 @@ export function UserTable() {
     <DataGrid
       table={table}
       recordCount={meta?.total || 0}
-      isLoading={isLoading || isFetching}
+      isLoading={isTableLoading}
+      emptyMessage="No employees found"
       tableLayout={{
         cellBorder: true,
         rowBorder: true,
@@ -654,19 +670,34 @@ export function UserTable() {
           <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             {/* Search Input */}
             <div className="relative w-full sm:w-80">
-              <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+              {isTableLoading || searchInputValue !== debouncedSearch ? (
+                <Loader2 className="size-4 text-primary animate-spin absolute start-3 top-1/2 -translate-y-1/2" />
+              ) : (
+                <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+              )}
               <Input
                 placeholder="Search by name, username, email, code..."
                 className="ps-9 h-9 text-xs bg-background w-full"
                 value={searchInputValue}
                 onChange={(e) => setSearchInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const trimmed = searchInputValue.trim();
+                    setDebouncedSearch(trimmed);
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                  }
+                }}
               />
               {searchInputValue.length > 0 && (
                 <Button
                   mode="icon"
                   variant="ghost"
                   className="absolute end-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSearchInputValue('')}
+                  onClick={() => {
+                    setSearchInputValue('');
+                    setDebouncedSearch('');
+                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                  }}
                 >
                   <X className="size-3.5" />
                 </Button>
@@ -680,11 +711,11 @@ export function UserTable() {
                 size="sm"
                 className="h-9 text-xs gap-1.5 px-3"
                 onClick={() => refetch()}
-                disabled={isFetching}
+                disabled={isTableLoading}
                 title="Refresh list"
               >
                 <RefreshCw
-                  className={`size-3.5 ${isFetching ? 'animate-spin' : ''}`}
+                  className={`size-3.5 ${isTableLoading ? 'animate-spin' : ''}`}
                 />
                 Refresh
               </Button>

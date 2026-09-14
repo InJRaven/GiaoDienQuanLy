@@ -30,11 +30,13 @@ import {
   Check,
   ExternalLink,
   X,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { useApiQuery } from '@/hooks/use-api-query';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMinDelay } from '@/hooks/use-min-delay';
 import { SubjectListResponse, SubjectItem } from '../types';
 import { SubjectImportDialog } from './subject-import-dialog';
 import { SubjectCreateDialog } from './subject-create-dialog';
@@ -169,7 +171,20 @@ export function SubjectTable() {
     useApiQuery<SubjectListResponse>(['subjects', queryParams], '/coursera/subjects', {
       params: queryParams,
       placeholderData: keepPreviousData,
+      staleTime: 0,
     });
+
+  // Minimum duration skeleton handling (initial load: 800ms, search/filter: 650ms)
+  const { showInitialSkeleton, isTableLoading } = useMinDelay({
+    isLoading,
+    isFetching,
+    hasData: !!data,
+    triggerKey: queryParams,
+    options: {
+      initialDelay: 800,
+      subsequentDelay: 650,
+    },
+  });
 
   const items = data?.items || [];
   const meta = data?.meta;
@@ -375,11 +390,11 @@ export function SubjectTable() {
         size="sm"
         className="h-8 text-xs gap-1.5"
         onClick={() => refetch()}
-        disabled={isFetching}
+        disabled={isTableLoading}
         title="Refresh subject list"
       >
         <RefreshCw
-          className={`size-3.5 ${isFetching ? 'animate-spin' : ''}`}
+          className={`size-3.5 ${isTableLoading ? 'animate-spin' : ''}`}
         />
         Refresh
       </Button>
@@ -396,7 +411,7 @@ export function SubjectTable() {
     </CardToolbar>
   );
 
-  if (isLoading && !data) {
+  if (showInitialSkeleton) {
     return <SubjectTableSkeleton />;
   }
 
@@ -404,7 +419,8 @@ export function SubjectTable() {
     <DataGrid
       table={table}
       recordCount={meta?.total || 0}
-      isLoading={isLoading || isFetching}
+      isLoading={isTableLoading}
+      emptyMessage="No subjects found"
       tableLayout={{
         cellBorder: true,
         rowBorder: true,
@@ -418,19 +434,34 @@ export function SubjectTable() {
       <Card className="border border-border shadow-xs">
         <CardHeader className="py-4 px-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="relative w-full sm:w-72">
-            <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+            {isTableLoading || searchInputValue !== debouncedSearch ? (
+              <Loader2 className="size-4 text-primary animate-spin absolute start-3 top-1/2 -translate-y-1/2" />
+            ) : (
+              <Search className="size-4 text-muted-foreground absolute start-3 top-1/2 -translate-y-1/2" />
+            )}
             <Input
               placeholder="Search by course code..."
               className="ps-9 h-8 text-xs"
               value={searchInputValue}
               onChange={(e) => setSearchInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const search = searchInputValue.trim();
+                  setDebouncedSearch(search);
+                  setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                }
+              }}
             />
             {searchInputValue.length > 0 && (
               <Button
                 mode="icon"
                 variant="ghost"
                 className="absolute end-1 top-1/2 -translate-y-1/2 h-6 w-6"
-                onClick={() => setSearchInputValue('')}
+                onClick={() => {
+                  setSearchInputValue('');
+                  setDebouncedSearch('');
+                  setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                }}
               >
                 <X className="size-3" />
               </Button>

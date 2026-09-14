@@ -50,6 +50,7 @@ import {
   PermissionOption,
   UpdateMenuItemDto,
 } from '../types';
+import { createMenuItemSchema, updateMenuItemSchema } from '../schemas';
 import { IconPickerModal } from './icon-picker-modal';
 import { MenuFormSkeleton } from './menu-form-skeleton';
 
@@ -227,45 +228,42 @@ export function MenuItemForm({
     });
   }, [treeData, isCreateMode, item]);
 
-  // Client-side validation
+  // Client-side validation using Zod
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const formData = {
+      key,
+      type,
+      title,
+      path,
+      icon,
+      badge,
+      badgeVariant,
+      permissionId,
+      parentId,
+      isExternal,
+      isCollapse,
+      collapseTitle,
+      expandTitle,
+    };
 
-    if (isCreateMode) {
-      if (!key.trim()) {
-        newErrors.key = 'Identifier Key là bắt buộc';
-      } else if (!/^[a-z][a-z0-9_]*$/.test(key.trim())) {
-        newErrors.key =
-          'Key must contain only lowercase letters, numbers, underscores and start with a letter (vd: cs_subjects)';
-      }
-    }
+    const result = isCreateMode
+      ? createMenuItemSchema.safeParse(formData)
+      : updateMenuItemSchema.safeParse(formData);
 
-    if (type === 'item') {
-      if (!title.trim()) {
-        newErrors.title = 'Menu item must have a title';
-      }
-      if (isExternal) {
-        if (!path.trim()) {
-          newErrors.path = 'External link must have a path';
-        } else if (!/^https?:\/\//i.test(path.trim())) {
-          newErrors.path = 'External link must start with http:// or https://';
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string;
+        if (!newErrors[field]) {
+          newErrors[field] = issue.message;
         }
-      }
-      if (isCollapse && path.trim()) {
-        newErrors.path = 'Collapsed group item cannot have a path';
-      }
-    } else if (type === 'heading') {
-      if (path.trim()) {
-        newErrors.path = 'Heading cannot have a path';
-      }
-    } else if (type === 'separator') {
-      if (path.trim()) {
-        newErrors.path = 'Separator cannot have a path';
-      }
+      });
+      setErrors(newErrors);
+      return false;
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
   // Handle server error code mapping

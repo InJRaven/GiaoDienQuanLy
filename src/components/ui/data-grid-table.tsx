@@ -530,7 +530,7 @@ function DataGridTable<TData>() {
           Array.from({
             length:
               table.getRowModel().rows.length > 0
-                ? table.getRowModel().rows.length
+                ? Math.max(Math.min(table.getRowModel().rows.length, 10), 5)
                 : Math.min(pagination.pageSize, 6),
           }).map((_, rowIndex) => (
             <DataGridTableBodyRowSkeleton key={rowIndex}>

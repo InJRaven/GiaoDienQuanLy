@@ -8,18 +8,19 @@ export function RolesSkeleton() {
       <div className="col-span-12 lg:col-span-4 xl:col-span-3 h-full">
         <Card className="border border-border h-full flex flex-col shadow-xs">
           {/* Card Header */}
-          <CardHeader className="p-4 pb-3 border-b border-border space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Skeleton className="size-4.5 rounded" />
-                <Skeleton className="h-4.5 w-16 rounded" />
-                <Skeleton className="h-4 w-6 rounded-full" />
-              </div>
-              <Skeleton className="h-8 w-22 rounded-md" />
+          <CardHeader className="py-3 px-4 border-b border-border flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <Skeleton className="size-4.5 rounded" />
+              <Skeleton className="h-4.5 w-16 rounded" />
+              <Skeleton className="h-4 w-6 rounded-full" />
             </div>
-            {/* Search Input */}
-            <Skeleton className="h-8 w-full rounded-md" />
+            <Skeleton className="h-8 w-22 rounded-md" />
           </CardHeader>
+
+          {/* Search Bar Skeleton */}
+          <div className="p-3 border-b border-border bg-muted/10">
+            <Skeleton className="h-8 w-full rounded-md" />
+          </div>
 
           {/* Role Cards List */}
           <CardContent className="p-3 flex-1 overflow-y-auto space-y-2.5">
@@ -53,31 +54,29 @@ export function RolesSkeleton() {
       <div className="col-span-12 lg:col-span-8 xl:col-span-9 h-full">
         <Card className="border border-border h-full flex flex-col shadow-xs">
           {/* Matrix Header */}
-          <CardHeader className="p-4 pb-3 border-b border-border space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Skeleton className="size-5 rounded" />
-                  <Skeleton className="h-5.5 w-40 rounded" />
-                  <Skeleton className="h-4 w-20 rounded" />
-                  <Skeleton className="h-4.5 w-16 rounded-full" />
-                  <Skeleton className="h-4.5 w-16 rounded-full" />
-                </div>
-                <Skeleton className="h-3.5 w-64 sm:w-80 rounded" />
+          <CardHeader className="py-3.5 px-5 border-b border-border flex items-center justify-between gap-4 shrink-0">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Skeleton className="size-5 rounded" />
+                <Skeleton className="h-5.5 w-40 rounded" />
+                <Skeleton className="h-4 w-20 rounded" />
+                <Skeleton className="h-4.5 w-16 rounded-full" />
+                <Skeleton className="h-4.5 w-16 rounded-full" />
               </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <Skeleton className="h-8 w-20 rounded-md" />
-                <Skeleton className="h-8 w-24 rounded-md" />
-              </div>
+              <Skeleton className="h-3.5 w-64 sm:w-80 rounded" />
             </div>
 
-            {/* Matrix Filter Bar */}
-            <div className="flex items-center justify-between gap-3 pt-1">
-              <Skeleton className="h-8 w-64 max-w-sm rounded-md" />
-              <Skeleton className="h-4 w-36 rounded hidden sm:block" />
+            <div className="flex items-center gap-2 shrink-0">
+              <Skeleton className="h-8 w-20 rounded-md" />
+              <Skeleton className="h-8 w-24 rounded-md" />
             </div>
           </CardHeader>
+
+          {/* Matrix Filter Bar */}
+          <div className="px-5 py-2.5 border-b border-border bg-muted/10 flex items-center justify-between gap-3 shrink-0">
+            <Skeleton className="h-8 w-64 max-w-sm rounded-md" />
+            <Skeleton className="h-4 w-36 rounded hidden sm:block" />
+          </div>
 
           {/* Matrix Modules List */}
           <CardContent className="p-4 flex-1 overflow-y-auto space-y-4">

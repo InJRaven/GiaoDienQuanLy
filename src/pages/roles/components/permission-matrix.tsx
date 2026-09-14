@@ -2,7 +2,15 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardHeading,
+  CardTitle,
+  CardToolbar,
+} from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -157,25 +165,68 @@ export function PermissionMatrix({
 
   if (isLoading || !roleDetail) {
     return (
-      <Card className="border border-border h-full flex flex-col">
-        <CardHeader className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-48 rounded" />
-              <Skeleton className="h-4 w-72 rounded" />
+      <Card className="border border-border h-full flex flex-col shadow-xs">
+        {/* Matrix Header Skeleton */}
+        <CardHeader className="py-3.5 px-5 border-b border-border flex items-center justify-between gap-4 shrink-0">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Skeleton className="size-5 rounded" />
+              <Skeleton className="h-5.5 w-44 rounded" />
+              <Skeleton className="h-4 w-20 rounded" />
+              <Skeleton className="h-4.5 w-16 rounded-full" />
+              <Skeleton className="h-4.5 w-16 rounded-full" />
             </div>
-            <div className="flex gap-2">
-              <Skeleton className="h-8 w-20 rounded" />
-              <Skeleton className="h-8 w-20 rounded" />
-            </div>
+            <Skeleton className="h-3.5 w-72 sm:w-96 rounded" />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Skeleton className="h-8 w-20 rounded-md" />
+            <Skeleton className="h-8 w-24 rounded-md" />
           </div>
         </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          <Skeleton className="h-20 w-full rounded-xl" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Skeleton className="h-48 rounded-xl" />
-            <Skeleton className="h-48 rounded-xl" />
-          </div>
+
+        {/* Matrix Filter Bar Skeleton */}
+        <div className="px-5 py-2.5 border-b border-border bg-muted/10 flex items-center justify-between gap-3 shrink-0">
+          <Skeleton className="h-8 w-64 max-w-sm rounded-md" />
+          <Skeleton className="h-4 w-36 rounded hidden sm:block" />
+        </div>
+
+        {/* Matrix Modules List Skeleton */}
+        <CardContent className="p-4 flex-1 overflow-y-auto space-y-4">
+          {[1, 2, 3].map((moduleIdx) => (
+            <div
+              key={moduleIdx}
+              className="border border-border rounded-xl bg-card overflow-hidden shadow-2xs"
+            >
+              {/* Module Header Bar Skeleton */}
+              <div className="p-3 bg-muted/30 border-b border-border flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Skeleton className="size-4 rounded" />
+                  <Skeleton className="h-4 w-32 rounded" />
+                  <Skeleton className="h-3 w-16 rounded hidden sm:inline" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-14 rounded-md" />
+                  <Skeleton className="h-5 w-16 rounded hidden sm:inline" />
+                </div>
+              </div>
+
+              {/* Module Permissions Grid Skeleton */}
+              <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                {[1, 2, 3, 4].map((permIdx) => (
+                  <div
+                    key={permIdx}
+                    className="p-2.5 rounded-lg border border-border/60 flex items-start gap-2.5 bg-muted/10"
+                  >
+                    <Skeleton className="size-4 rounded shrink-0 mt-0.5" />
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <Skeleton className="h-3.5 w-28 rounded" />
+                      <Skeleton className="h-2.5 w-20 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     );
@@ -187,118 +238,120 @@ export function PermissionMatrix({
     <TooltipProvider>
       <Card className="border border-border h-full flex flex-col">
         {/* Role Header */}
-        <CardHeader className="p-4 pb-3 border-b border-border space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <Shield className="size-5 text-primary" />
-                <h2 className="text-base font-bold text-foreground">
-                  {formatRoleName(roleDetail.name)}
-                </h2>
-                <span className="font-mono text-xs text-muted-foreground">
-                  @{roleDetail.name}
-                </span>
+        <CardHeader className="py-3.5 px-5 border-b border-border flex items-center justify-between gap-4 shrink-0">
+          <CardHeading className="flex flex-col gap-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Shield className="size-5 text-primary shrink-0" />
+              <CardTitle className="text-base font-bold text-foreground truncate">
+                {formatRoleName(roleDetail.name)}
+              </CardTitle>
+              <span className="font-mono text-xs text-muted-foreground">
+                @{roleDetail.name}
+              </span>
 
-                {isSystemRole && (
-                  <Badge
-                    variant="primary"
-                    appearance="light"
-                    size="xs"
-                    className="gap-1 font-medium"
-                  >
-                    <ShieldCheck className="size-3" />
-                    System Role
-                  </Badge>
-                )}
-
-                <Badge variant="secondary" size="xs" className="gap-1 font-mono">
-                  <Users className="size-3" />
-                  {roleDetail.userCount} {roleDetail.userCount === 1 ? 'user' : 'users'}
+              {isSystemRole && (
+                <Badge
+                  variant="primary"
+                  appearance="light"
+                  size="xs"
+                  className="gap-1 font-medium shrink-0"
+                >
+                  <ShieldCheck className="size-3" />
+                  System Role
                 </Badge>
-              </div>
-
-              {roleDetail.description && (
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {roleDetail.description}
-                </p>
               )}
+
+              <Badge variant="secondary" size="xs" className="gap-1 font-mono shrink-0">
+                <Users className="size-3" />
+                {roleDetail.userCount} {roleDetail.userCount === 1 ? 'user' : 'users'}
+              </Badge>
             </div>
 
-            {/* Role Header Action Buttons */}
-            {canManage && !isSystemRole && (
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onEditRole}
-                  className="h-8 text-xs gap-1.5"
-                >
-                  <Edit3 className="size-3.5" />
-                  Edit Role
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onDeleteRole}
-                  className="h-8 text-xs gap-1.5 text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="size-3.5" />
-                  Delete Role
-                </Button>
-              </div>
+            {roleDetail.description && (
+              <CardDescription className="text-xs text-muted-foreground line-clamp-2">
+                {roleDetail.description}
+              </CardDescription>
             )}
-          </div>
+          </CardHeading>
 
-          {/* System Role Immutability Notice */}
-          {isSystemRole && (
+          {/* Role Header Action Buttons */}
+          {canManage && !isSystemRole && (
+            <CardToolbar className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onEditRole}
+                className="h-8 text-xs gap-1.5"
+              >
+                <Edit3 className="size-3.5" />
+                Edit Role
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onDeleteRole}
+                className="h-8 text-xs gap-1.5 text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="size-3.5" />
+                Delete Role
+              </Button>
+            </CardToolbar>
+          )}
+        </CardHeader>
+
+        {/* System Role Immutability Notice */}
+        {isSystemRole && (
+          <div className="px-5 pt-3">
             <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs flex items-start gap-2.5">
               <ShieldCheck className="size-4.5 shrink-0 mt-0.5 text-primary" />
               <div className="leading-relaxed">
                 <strong>System Role (Immutable):</strong> This role provides core system recovery and administrative integrity. It cannot be renamed, edited, or deleted from the interface. The permission matrix is displayed in read-only mode.
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Read-Only Notice if lacks roles:manage */}
-          {!canManage && (
+        {/* Read-Only Notice if lacks roles:manage */}
+        {!canManage && (
+          <div className="px-5 pt-3">
             <div className="p-3 rounded-xl bg-muted/40 border border-border text-muted-foreground text-xs flex items-center gap-2">
               <Lock className="size-4 shrink-0 text-muted-foreground" />
               <span>
                 <strong>Read-Only Mode:</strong> You have viewing privileges (<code>roles:view</code>). Modifying the permissions matrix requires <code>roles:manage</code> permission.
               </span>
             </div>
-          )}
-
-          {/* Matrix Search & Info Filter Bar */}
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="size-3.5 text-muted-foreground absolute start-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <Input
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Filter permissions by code or title..."
-                className="h-8 text-xs ps-8 pe-7 bg-muted/20"
-              />
-              {searchFilter && (
-                <button
-                  type="button"
-                  onClick={() => setSearchFilter('')}
-                  className="absolute end-2 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="size-3" />
-                </button>
-              )}
-            </div>
-
-            <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-1.5">
-              <span>Configured:</span>
-              <span className="font-mono font-bold text-foreground">
-                {selectedIds.length} / {allPermissions.length}
-              </span>
-              <span>permissions</span>
-            </div>
           </div>
-        </CardHeader>
+        )}
+
+        {/* Matrix Search & Info Filter Bar */}
+        <div className="px-5 py-2.5 border-b border-border bg-muted/10 flex items-center justify-between gap-3 shrink-0">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="size-3.5 text-muted-foreground absolute start-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Input
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Filter permissions by code or title..."
+              className="h-8 text-xs ps-8 pe-7 bg-background"
+            />
+            {searchFilter && (
+              <button
+                type="button"
+                onClick={() => setSearchFilter('')}
+                className="absolute end-2 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-1.5 shrink-0">
+            <span>Configured:</span>
+            <span className="font-mono font-bold text-foreground">
+              {selectedIds.length} / {allPermissions.length}
+            </span>
+            <span>permissions</span>
+          </div>
+        </div>
 
         {/* Permission Matrix Body */}
         <CardContent className="p-4 flex-1 overflow-y-auto space-y-4">

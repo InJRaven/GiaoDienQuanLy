@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 /* Tailwind Core */
 @import 'tailwindcss';
 
@@ -12,6 +14,11 @@
 
   *:focus-visible {
     @apply outline-ring rounded-xs shadow-none outline-2 outline-offset-3 transition-none!;
+  }
+
+  html,
+  body {
+    font-family: var(--font-sans, 'Inter', sans-serif);
   }
 }
 

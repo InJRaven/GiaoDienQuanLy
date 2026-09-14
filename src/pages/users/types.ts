@@ -16,6 +16,23 @@ export function formatRoleName(name?: string | null): string {
     .join(' ');
 }
 
+export interface UserProfile {
+  phone?: string | null;
+  avatarUrl?: string | null;
+  idCardNumber?: string | null;
+  dateOfBirth?: string | null; // YYYY-MM-DD
+  address?: string | null;
+  bankAccount?: string | null;
+  bankName?: string | null;
+}
+
+export interface PositionOption {
+  id: number;
+  name: string;
+  defaultSalary: string | null; // String from NUMERIC column
+  description: string | null;
+}
+
 export interface UserListItem {
   id: number;
   username: string;
@@ -23,13 +40,15 @@ export interface UserListItem {
   fullName: string;
   employeeCode: string | null;
   department: string | null;
-  positionId: string | null;
+  positionId: number | string | null;
+  position?: PositionOption | null;
   hireDate: string | null; // YYYY-MM-DD
   employmentStatus: EmploymentStatus;
   isActive: boolean;
   lastLoginAt: string | null;
   createdAt: string;
   roles: UserRole[];
+  profile?: UserProfile;
 }
 
 export interface UserPaginationMeta {
@@ -53,9 +72,11 @@ export interface CreateUserDto {
   fullName?: string;
   employeeCode?: string;
   department?: string;
+  positionId?: number | null;
   hireDate?: string;
   employmentStatus?: EmploymentStatus;
   roleIds?: number[];
+  profile?: UserProfile;
 }
 
 export interface UpdateUserDto {
@@ -63,8 +84,9 @@ export interface UpdateUserDto {
   fullName?: string | null;
   employeeCode?: string | null;
   department?: string | null;
-  positionId?: string | null;
+  positionId?: number | null;
   hireDate?: string | null;
+  profile?: UserProfile | null;
 }
 
 export interface UpdateUserStatusDto {
@@ -111,4 +133,57 @@ export interface ApiErrorResponse {
     fields?: string[];
     resource?: string;
   };
+}
+
+// -------------------------------------------------------------
+// Collaborator Types
+// -------------------------------------------------------------
+
+export interface CollaboratorItem {
+  id: number;
+  fullName: string;
+  phone: string | null;
+  note: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CollaboratorPaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface CollaboratorListResponse {
+  items: CollaboratorItem[];
+  meta: CollaboratorPaginationMeta;
+}
+
+export interface CreateCollaboratorDto {
+  fullName: string;
+  phone?: string | null;
+  note?: string | null;
+  isActive?: boolean;
+}
+
+export interface UpdateCollaboratorDto {
+  fullName?: string;
+  phone?: string | null;
+  note?: string | null;
+  isActive?: boolean;
+}
+
+export type CollaboratorSortBy = 'full_name' | 'created_at' | 'updated_at';
+
+export interface CollaboratorFilterParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  isActive?: boolean;
+  sortBy?: CollaboratorSortBy;
+  order?: 'asc' | 'desc';
 }

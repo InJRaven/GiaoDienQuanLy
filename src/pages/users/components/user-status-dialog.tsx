@@ -28,6 +28,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { EmploymentStatus, UpdateUserStatusDto, UserListItem } from '../types';
+import { updateUserStatusSchema } from '../schemas';
 
 interface Props {
   user: UserListItem | null;
@@ -62,6 +63,15 @@ export function UserStatusDialog({
     if (!user) return;
     if (isSelf) {
       toast.error('You cannot change your own account status.');
+      return;
+    }
+
+    const parseResult = updateUserStatusSchema.safeParse({
+      isActive,
+      employmentStatus,
+    });
+    if (!parseResult.success) {
+      setErrorMsg(parseResult.error.issues[0]?.message || 'Invalid status data');
       return;
     }
 

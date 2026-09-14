@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardHeading,
+  CardTitle,
+  CardToolbar,
+} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Shield,
@@ -45,19 +52,19 @@ export function RoleList({
 
   return (
     <Card className="border border-border h-full flex flex-col">
-      <CardHeader className="p-4 pb-3 border-b border-border space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Shield className="size-4.5 text-primary" />
-            <CardTitle className="text-sm font-bold text-foreground">
-              Roles
-            </CardTitle>
-            <Badge variant="secondary" size="xs" className="font-mono">
-              {roles.length}
-            </Badge>
-          </div>
+      <CardHeader className="py-3 px-4 border-b border-border flex items-center justify-between shrink-0">
+        <CardHeading className="flex items-center gap-2">
+          <Shield className="size-4.5 text-primary" />
+          <CardTitle className="text-sm font-bold text-foreground">
+            Roles
+          </CardTitle>
+          <Badge variant="secondary" size="xs" className="font-mono">
+            {roles.length}
+          </Badge>
+        </CardHeading>
 
-          {canManage && (
+        {canManage && (
+          <CardToolbar>
             <Button
               size="sm"
               onClick={onAddRole}
@@ -66,17 +73,19 @@ export function RoleList({
               <Plus className="size-3.5" />
               Add Role
             </Button>
-          )}
-        </div>
+          </CardToolbar>
+        )}
+      </CardHeader>
 
-        {/* Search Filter Input */}
+      {/* Search Filter Input Bar */}
+      <div className="p-3 border-b border-border bg-muted/10">
         <div className="relative">
           <Search className="size-3.5 text-muted-foreground absolute start-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search roles..."
-            className="h-8 text-xs ps-8 pe-7 bg-muted/20"
+            className="h-8 text-xs ps-8 pe-7 bg-background"
           />
           {searchTerm && (
             <button
@@ -88,7 +97,7 @@ export function RoleList({
             </button>
           )}
         </div>
-      </CardHeader>
+      </div>
 
       <CardContent className="p-3 flex-1 overflow-y-auto space-y-2">
         {isLoading ? (

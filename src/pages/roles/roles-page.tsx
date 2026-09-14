@@ -20,6 +20,7 @@ import { RolesSkeleton } from './components/roles-skeleton';
 import { RoleCreateDialog } from './components/role-create-dialog';
 import { RoleEditDialog } from './components/role-edit-dialog';
 import { RoleDeleteDialog } from './components/role-delete-dialog';
+import { useMinDelay } from '@/hooks/use-min-delay';
 
 export function RolesPage() {
   const queryClient = useQueryClient();
@@ -38,7 +39,11 @@ export function RolesPage() {
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
 
   // Fetch all roles
-  const { data: roles = [], isLoading: isLoadingRoles } = useApiQuery<RoleItem[]>(
+  const {
+    data: roles = [],
+    isLoading: isLoadingRoles,
+    isFetching: isFetchingRoles,
+  } = useApiQuery<RoleItem[]>(
     ['roles'],
     '/roles',
     {
@@ -67,15 +72,42 @@ export function RolesPage() {
   }, [roles, selectedRoleId]);
 
   // Fetch detailed permissions for the active role
-  const { data: roleDetail = null, isLoading: isLoadingRoleDetail } =
-    useApiQuery<RoleDetail>(
-      ['roles', selectedRoleId],
-      `/roles/${selectedRoleId}`,
-      {
-        enabled: canView && selectedRoleId !== null,
-        staleTime: 5 * 60 * 1000,
-      },
-    );
+  const {
+    data: roleDetail = null,
+    isLoading: isLoadingRoleDetail,
+    isFetching: isFetchingRoleDetail,
+  } = useApiQuery<RoleDetail>(
+    ['roles', selectedRoleId],
+    `/roles/${selectedRoleId}`,
+    {
+      enabled: canView && selectedRoleId !== null,
+      staleTime: 5 * 60 * 1000,
+    },
+  );
+
+  // Minimum duration skeleton handling (initial load: 800ms)
+  const { showInitialSkeleton } = useMinDelay({
+    isLoading:
+      isLoadingRoles ||
+      (roles.length > 0 && selectedRoleId !== null && isLoadingRoleDetail),
+    isFetching: isFetchingRoles,
+    hasData: roles.length > 0 && (selectedRoleId === null || roleDetail !== null),
+    options: {
+      initialDelay: 800,
+    },
+  });
+
+  // Minimum duration skeleton when switching active role (650ms)
+  const { isTableLoading: isMatrixLoading } = useMinDelay({
+    isLoading: isLoadingRoleDetail,
+    isFetching: isFetchingRoleDetail,
+    hasData: !!roleDetail,
+    triggerKey: selectedRoleId,
+    options: {
+      initialDelay: 800,
+      subsequentDelay: 650,
+    },
+  });
 
   // Handler: Save permissions matrix for active role
   const handleSavePermissions = async (permissionIds: number[]) => {
@@ -177,9 +209,6 @@ export function RolesPage() {
     );
   }
 
-  const isPageLoading =
-    isLoadingRoles || (roles.length > 0 && selectedRoleId !== null && isLoadingRoleDetail);
-
   return (
     <Container width="fluid" className="flex flex-col gap-5 py-5">
       {/* Top Toolbar */}
@@ -193,7 +222,7 @@ export function RolesPage() {
       </Toolbar>
 
       {/* Main 2-Column Content or Skeleton */}
-      {isPageLoading ? (
+      {showInitialSkeleton ? (
         <RolesSkeleton />
       ) : (
         <div className="grid grid-cols-12 gap-5 items-start min-h-[calc(100vh-210px)]">
@@ -216,7 +245,7 @@ export function RolesPage() {
               allPermissions={allPermissions}
               currentUserRoles={userRoles}
               canManage={canManage}
-              isLoading={isLoadingRoleDetail}
+              isLoading={isMatrixLoading}
               onEditRole={() => setEditDialogOpen(true)}
               onDeleteRole={() => setDeleteDialogOpen(true)}
               onSavePermissions={handleSavePermissions}

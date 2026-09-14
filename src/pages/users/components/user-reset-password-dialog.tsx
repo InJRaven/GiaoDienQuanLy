@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { ResetPasswordResponse, UserListItem } from '../types';
+import { resetPasswordSchema } from '../schemas';
 
 interface Props {
   user: UserListItem | null;
@@ -95,13 +96,9 @@ export function UserResetPasswordDialog({
       return;
     }
 
-    if (!password) {
-      setErrorMsg('Please enter a new password');
-      return;
-    }
-
-    if (password.length < 12) {
-      setErrorMsg('Password must be at least 12 characters');
+    const parseResult = resetPasswordSchema.safeParse({ password });
+    if (!parseResult.success) {
+      setErrorMsg(parseResult.error.issues[0]?.message || 'Invalid password');
       return;
     }
 
