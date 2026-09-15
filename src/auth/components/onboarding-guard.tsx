@@ -1,16 +1,12 @@
-import { Navigate, Outlet } from 'react-router';
+import { Outlet } from 'react-router';
 import { ScreenLoader } from '@/components/common/screen-loader';
 import { useAuth } from '../context/auth-context';
+import { OnboardingPage } from '../pages/onboarding-page';
 
 /**
- * OnboardingGuard protects all internal business routes.
- * 
- * Rules:
- * 1. If session is loading, display ScreenLoader.
- * 2. If authenticated and either flag is pending:
- *    - profile.emailVerified === false -> redirect to /auth/onboarding (Step 1)
- *    - profile.mustChangePassword === true -> redirect to /auth/onboarding (Step 2)
- * 3. Prevents bypass via direct URL typing, sidebar navigation, or browser Back.
+ * OnboardingGuard renders internal business routes (Dashboard) in the background
+ * and displays the centered OnboardingPage modal on top if email verification
+ * or initial password change is still pending.
  */
 export function OnboardingGuard() {
   const { profile, loading, isAuthenticated } = useAuth();
@@ -28,10 +24,12 @@ export function OnboardingGuard() {
   // Check onboarding flags
   const needsEmailVerification = profile?.emailVerified === false;
   const needsPasswordChange = profile?.mustChangePassword === true;
+  const showOnboarding = needsEmailVerification || needsPasswordChange;
 
-  if (needsEmailVerification || needsPasswordChange) {
-    return <Navigate to="/auth/onboarding" replace />;
-  }
-
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      {showOnboarding && <OnboardingPage isModal={true} />}
+    </>
+  );
 }

@@ -195,7 +195,7 @@ function AccordionMenuLabel({
       data-slot="accordion-menu-label"
       role="presentation"
       className={cn(
-        'px-2 py-1.5 text-xs font-medium text-muted-foreground',
+        'px-2 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70',
         classNames?.label,
         className,
       )}
@@ -224,7 +224,7 @@ function AccordionMenuSeparator({
 }
 
 const itemVariants = cva(
-  'relative cursor-pointer select-none flex w-full text-start items-center text-foreground rounded-lg gap-2 px-2 py-1.5 text-sm outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground disabled:opacity-50 disabled:bg-transparent focus-visible:bg-accent focus-visible:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:opacity-60 [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0 [&_a]:flex [&>a]:w-full [&>a]:items-center [&>a]:gap-2',
+  'relative cursor-pointer select-none flex w-full text-start items-center text-foreground rounded-lg gap-2 px-2 h-8 text-sm outline-hidden transition-colors hover:bg-muted/60 hover:text-primary data-[selected=true]:bg-muted data-[selected=true]:text-primary data-[selected=true]:font-medium disabled:opacity-50 disabled:bg-transparent focus-visible:bg-accent focus-visible:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:opacity-60 [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0 [&_a]:flex [&>a]:w-full [&>a]:items-center [&>a]:gap-2',
   {
     variants: {
       variant: {
@@ -322,7 +322,7 @@ function AccordionMenuSubTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-menu-sub-trigger"
         className={cn(
-          'w-full relative flex items-center cursor-pointer select-none text-start rounded-lg gap-2 px-2 py-1.5 text-sm outline-hidden text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground [&_svg]:pointer-events-none [&_svg:not([role=img]):not([class*=text-])]:opacity-60 [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
+          'w-full relative flex items-center cursor-pointer select-none text-start rounded-lg gap-2 px-2 h-8 text-sm outline-hidden text-foreground transition-colors hover:bg-muted/60 hover:text-primary data-[selected=true]:bg-muted data-[selected=true]:text-primary data-[selected=true]:font-medium focus-visible:bg-accent focus-visible:text-accent-foreground [&_svg]:pointer-events-none [&_svg:not([role=img]):not([class*=text-])]:opacity-60 [&_svg:not([class*=size-])]:size-4 [&_svg]:shrink-0',
           classNames?.subTrigger,
           className,
         )}
@@ -389,8 +389,9 @@ function AccordionMenuSubContent({
     <AccordionPrimitive.Content
       data-slot="accordion-menu-sub-content"
       className={cn(
-        'ps-5',
+        'ps-6',
         'overflow-hidden transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down',
+        '[&_[data-slot=accordion-menu-item]]:text-[13px] [&_[data-slot=accordion-menu-sub-trigger]]:text-[13px]',
         classNames?.subContent,
         className,
       )}
@@ -398,7 +399,7 @@ function AccordionMenuSubContent({
     >
       {type === 'multiple' ? (
         <AccordionPrimitive.Root
-          className={cn('w-full py-0.5', classNames?.subWrapper)}
+          className={cn('w-full py-0.5 space-y-0.5', classNames?.subWrapper)}
           type="multiple"
           value={currentValue as string[]}
           role="menu"

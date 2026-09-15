@@ -17,7 +17,7 @@ export function Sidebar() {
       </div>
 
       {/* Sidebar Menu - Scrollable */}
-      <div className="flex grow flex-col overflow-y-auto px-3 py-4 kt-scrollable-y">
+      <div className="flex grow flex-col overflow-y-auto px-5 py-5 kt-scrollable-y">
         <SidebarMenu />
       </div>
     </aside>

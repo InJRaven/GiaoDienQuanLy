@@ -208,7 +208,7 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
       username,
       password,
       fullName,
-      email: email.trim() || undefined,
+      email: email.trim(),
       employeeCode: employeeCode.trim() || undefined,
       department: department.trim() || undefined,
       positionId: positionId ? Number(positionId) : undefined,
@@ -584,7 +584,9 @@ export function UserCreateDialog({ open, onOpenChange, onSuccess }: Props) {
 
                 {/* Email */}
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-xs font-semibold">Email Address</Label>
+                  <Label className="text-xs font-semibold">
+                    Email Address <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     type="email"
                     value={email}

@@ -1,6 +1,5 @@
 import { AuthRouting } from '@/auth/auth-routing';
 import { OnboardingGuard } from '@/auth/components/onboarding-guard';
-import { OnboardingPage } from '@/auth/pages/onboarding-page';
 import { RequireAuth } from '@/auth/require-auth';
 import { ErrorRouting } from '@/errors/error-routing';
 import { Demo1Layout } from '@/layouts/demo1/layout';
@@ -17,8 +16,8 @@ export function AppRoutingSetup() {
   return (
     <Routes>
       <Route element={<RequireAuth />}>
-        {/* Onboarding page for email verification & password change */}
-        <Route path="/auth/onboarding" element={<OnboardingPage />} />
+        {/* Onboarding page redirects to dashboard where modal is displayed */}
+        <Route path="/auth/onboarding" element={<Navigate to="/" replace />} />
 
         {/* Protected routes wrapped in OnboardingGuard */}
         <Route element={<OnboardingGuard />}>

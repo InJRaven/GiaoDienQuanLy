@@ -79,12 +79,10 @@ export const createUserSchema = z.object({
     .min(1, 'Full name is required')
     .max(100, 'Full name cannot exceed 100 characters'),
   email: z
-    .string()
+    .string({ required_error: 'Email là bắt buộc' })
     .trim()
-    .email('Invalid email address format')
-    .or(z.literal(''))
-    .optional()
-    .default(''),
+    .min(1, 'Email là bắt buộc')
+    .email('Địa chỉ email không đúng định dạng'),
   employeeCode: z
     .string()
     .trim()
