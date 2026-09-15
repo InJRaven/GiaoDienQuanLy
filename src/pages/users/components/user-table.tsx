@@ -39,8 +39,10 @@ import {
   Mail,
   UserCheck,
   Eye,
+  UserCircle,
   Loader2,
 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { useAuth } from '@/auth/context/auth-context';
 import { useApiQuery } from '@/hooks/use-api-query';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -114,6 +116,7 @@ function formatRelativeTime(dateString?: string | null): string {
 }
 
 export function UserTable() {
+  const navigate = useNavigate();
   const { user: currentUser, profile: currentProfile, can } = useAuth();
   const currentUserId = currentUser?.id || currentProfile?.id;
 
@@ -555,6 +558,10 @@ export function UserTable() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={() => navigate(`/users/${user.id}/profile`)}>
+                    <UserCircle className="size-4 mr-2 text-primary" /> Trang hồ sơ
+                  </DropdownMenuItem>
+
                   <DropdownMenuItem onClick={() => setDetailsUser(user)}>
                     <Eye className="size-4 mr-2" /> View Details
                   </DropdownMenuItem>

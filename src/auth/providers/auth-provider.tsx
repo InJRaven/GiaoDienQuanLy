@@ -14,7 +14,8 @@ import {
 } from '@/auth/lib/models';
 import { authService } from '@/auth/services/auth-service';
 import { tokenStore } from '@/auth/services/token-store';
-import { setAuthCallbacks } from '@/lib/axios.config';
+import { apiClient, setAuthCallbacks } from '@/lib/axios.config';
+import { queryClient } from '@/providers/query-client';
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
@@ -103,7 +104,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     // Setup Axios interceptor callbacks
     setAuthCallbacks({
       onAuthFailure: () => {
+        delete apiClient.defaults.headers.common.Authorization;
         tokenStore.clear();
+        queryClient.clear();
         setIsAuthenticated(false);
         setUser(undefined);
         setProfile(null);
@@ -133,6 +136,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         password,
         audience: audience || 'web',
       });
+
+      // Clear queryClient cache & set header immediately to prevent session bleed
+      queryClient.clear();
+      apiClient.defaults.headers.common.Authorization = `Bearer ${res.accessToken}`;
 
       scheduleRefresh(res.expiresIn);
 
@@ -172,12 +179,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
     try {
       await authService.logout();
     } finally {
+      delete apiClient.defaults.headers.common.Authorization;
       tokenStore.clear();
+      queryClient.clear();
       setIsAuthenticated(false);
       setUser(undefined);
       setProfile(null);
       setRoles([]);
       setPermissions([]);
+      try {
+        localStorage.removeItem('accessToken');
+      } catch {}
     }
   };
 

@@ -7,6 +7,7 @@ import { CustomerOrdersPage } from '@/pages/customer_order';
 import { Dashboards } from '@/pages/dashboards';
 import { MenuPage } from '@/pages/menu';
 import { RolesPage } from '@/pages/roles';
+import { UserProfilePage } from '@/pages/user_profile';
 import { UsersPage } from '@/pages/users';
 import { Navigate, Route, Routes } from 'react-router';
 
@@ -38,6 +39,23 @@ export function AppRoutingSetup() {
           />
           {/* ROLES & PERMISSIONS PAGE */}
           <Route path="/roles" element={<RolesPage />} />
+          {/* USER PROFILE ROUTES */}
+          <Route
+            path="/account/profile"
+            element={<UserProfilePage mode="my_profile" />}
+          />
+          <Route
+            path="/account/home/user-profile"
+            element={<Navigate to="/account/profile" replace />}
+          />
+          <Route
+            path="/public-profile/profiles/default"
+            element={<Navigate to="/account/profile" replace />}
+          />
+          <Route
+            path="/users/:id/profile"
+            element={<UserProfilePage mode="admin" />}
+          />
         </Route>
       </Route>
       <Route path="error/*" element={<ErrorRouting />} />

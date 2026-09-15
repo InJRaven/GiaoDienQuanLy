@@ -44,12 +44,14 @@ export const setAuthCallbacks = (callbacks: {
   }
 };
 
-// Request Interceptor: Attach in-memory access token if available
+// Request Interceptor: Attach in-memory access token dynamically at request time
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = tokenStore.getAccessToken();
-    if (token && !config.headers.Authorization) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
     }
     return config;
   },

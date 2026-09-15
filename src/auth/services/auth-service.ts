@@ -26,8 +26,9 @@ export const authService = {
     const response = await api.post<LoginResponse>('/auth/login', payload);
     const { accessToken, expiresIn } = response;
 
-    // Save access token to RAM
+    // Save access token to RAM and set default header
     tokenStore.setAccessToken(accessToken);
+    apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
     return response;
   },
@@ -40,8 +41,9 @@ export const authService = {
     const response = await api.post<RefreshResponse>('/auth/refresh');
     const { accessToken } = response;
 
-    // Update in-memory access token
+    // Update in-memory access token and default header
     tokenStore.setAccessToken(accessToken);
+    apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
     return response;
   },
@@ -56,6 +58,7 @@ export const authService = {
     } catch (error) {
       console.warn('Logout request completed with error:', error);
     } finally {
+      delete apiClient.defaults.headers.common.Authorization;
       tokenStore.clear();
     }
   },

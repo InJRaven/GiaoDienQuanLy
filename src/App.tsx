@@ -12,11 +12,11 @@ import { SettingsProvider } from './providers/settings-provider';
 import { ThemeProvider } from './providers/theme-provider';
 import { TooltipsProvider } from './providers/tooltips-provider';
 
+import { queryClient } from './providers/query-client';
+
 const { BASE_URL } = import.meta.env;
 
 export function App() {
-  const queryClient = new QueryClient();
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
