@@ -471,24 +471,38 @@ export function UserTable() {
           <span className={headerClass}>Login Access</span>
         ),
         cell: ({ row }) => {
-          const active = Boolean(row.original.isActive);
-          return active ? (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-              <span className="size-1.5 rounded-full bg-emerald-500" />
-              Active
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border whitespace-nowrap">
-              <span className="size-1.5 rounded-full bg-muted-foreground/60" />
-              Locked
-            </span>
+          const user = row.original;
+          const active = Boolean(user.isActive);
+          return (
+            <div className="flex flex-col gap-1 py-1">
+              {active ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap w-fit">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
+                  Active
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border whitespace-nowrap w-fit">
+                  <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+                  Locked
+                </span>
+              )}
+              {user.mustChangePassword && (
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 whitespace-nowrap w-fit"
+                  title="Tài khoản chưa đổi mật khẩu lần đầu"
+                >
+                  <KeyRound className="size-2.5 text-amber-600 dark:text-amber-400" />
+                  Chưa đổi MK lần đầu
+                </span>
+              )}
+            </div>
           );
         },
         enableSorting: false,
-        size: 110,
+        size: 130,
         meta: {
-          headerClassName: 'w-[110px] min-w-[100px]',
-          cellClassName: 'w-[110px] min-w-[100px]',
+          headerClassName: 'w-[130px] min-w-[120px]',
+          cellClassName: 'w-[130px] min-w-[120px]',
           skeleton: <Skeleton className="h-5 w-16 rounded-full" />,
         },
       },

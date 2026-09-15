@@ -11,6 +11,8 @@ export interface AuthUser {
   username: string;
   fullName: string;
   email?: string;
+  emailVerified?: boolean;
+  mustChangePassword?: boolean;
 }
 
 export interface LoginResponse {
@@ -51,6 +53,8 @@ export interface UserProfile {
   id: number;
   username: string;
   email: string | null;
+  emailVerified?: boolean;
+  mustChangePassword?: boolean;
   fullName: string;
   employeeCode: string | null;
   department: string | null;

@@ -104,6 +104,30 @@ export const authService = {
   },
 
   /**
+   * POST /auth/email-verification
+   * Request email verification code (200 OK)
+   */
+  async requestEmailVerification(): Promise<{
+    code: string;
+    message: string;
+    expiresInMinutes?: number;
+  }> {
+    return await api.post('/auth/email-verification');
+  },
+
+  /**
+   * POST /auth/verify-email
+   * Submit 6-digit verification code
+   */
+  async verifyEmail(code: string): Promise<{
+    code: string;
+    message: string;
+    emailVerified: boolean;
+  }> {
+    return await api.post('/auth/verify-email', { code });
+  },
+
+  /**
    * GET /users/:id
    * Requires Bearer token and 'users:view' permission
    */

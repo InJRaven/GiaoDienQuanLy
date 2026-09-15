@@ -15,6 +15,7 @@ export interface UserProfileResponse {
   username: string;
   email: string | null;
   emailVerified?: boolean;
+  mustChangePassword?: boolean;
   fullName: string;
   employeeCode: string | null;
   department: string | null;

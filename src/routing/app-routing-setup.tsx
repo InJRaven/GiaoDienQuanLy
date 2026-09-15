@@ -1,4 +1,6 @@
 import { AuthRouting } from '@/auth/auth-routing';
+import { OnboardingGuard } from '@/auth/components/onboarding-guard';
+import { OnboardingPage } from '@/auth/pages/onboarding-page';
 import { RequireAuth } from '@/auth/require-auth';
 import { ErrorRouting } from '@/errors/error-routing';
 import { Demo1Layout } from '@/layouts/demo1/layout';
@@ -15,9 +17,14 @@ export function AppRoutingSetup() {
   return (
     <Routes>
       <Route element={<RequireAuth />}>
-        <Route element={<Demo1Layout />}>
-          <Route index element={<Dashboards />} />
-          <Route path="/" element={<Dashboards />} />
+        {/* Onboarding page for email verification & password change */}
+        <Route path="/auth/onboarding" element={<OnboardingPage />} />
+
+        {/* Protected routes wrapped in OnboardingGuard */}
+        <Route element={<OnboardingGuard />}>
+          <Route element={<Demo1Layout />}>
+            <Route index element={<Dashboards />} />
+            <Route path="/" element={<Dashboards />} />
           {/* COURSERA PAGES */}
           <Route path="/coursera/subjects" element={<SubjectsPage />} />
           <Route path="/coursera/customers" element={<CustomerOrdersPage />} />
@@ -58,7 +65,8 @@ export function AppRoutingSetup() {
           />
         </Route>
       </Route>
-      <Route path="error/*" element={<ErrorRouting />} />
+    </Route>
+    <Route path="error/*" element={<ErrorRouting />} />
       <Route path="auth/*" element={<AuthRouting />} />
       <Route path="*" element={<Navigate to="/error/404" />} />
     </Routes>
